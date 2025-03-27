@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Learning Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* Basic Styling to Match Chat Interface */
+        body {
+            font-family: sans-serif;
+            background-color: #333;
+            color: #eee;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Full viewport height */
+        }
+
+        #logo {
+            width: 80px;
+            height: auto;
+            border-radius: 50%;
+            margin: 20px auto; /* Center Logo */
+            display: block;
+        }
+
+        .chat-container {
+            flex-grow: 1;
+            overflow-y: auto; /* Scrollable chat area */
+            padding: 20px;
+        }
+
+        .message {
+            background-color: #444;
+            color: #eee;
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            width: fit-content;
+            max-width: 70%;
+        }
+
+        .user-message {
+            background-color: #555;
+            align-self: flex-end;
+        }
+
+        /* Avatar and AI Message */
+        .ai-message-container {
+            display: flex; /* Use flexbox for avatar and message */
+            align-items: flex-start; /* Align items to the top */
+            margin-bottom: 10px;
+        }
+
+        .ai-message {
+            background-color: #444;
+            color: #eee;
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            width: fit-content;
+            max-width: 70%;
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .input-area {
+            padding: 15px;
+            background-color: #222;
+            display: flex;
+            align-items: center;
+            border-top: 1px solid #555;
+        }
+
+        #question {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid #555;
+            background-color: #444;
+            color: #eee;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        #askButton {
+            background-color: #555;
+            color: #eee;
+            padding: 8px 12px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+  <img id="logo" src="{{ url_for('static', filename='assets/logo.png') }}" alt="Learning Assistant Logo">
+
+  <div class="chat-container" id="chat-container">
+    <!-- Messages will be added here -->
+  </div>
+
+  <div class="input-area">
+    <input type="text" id="question" placeholder="Ask me anything" name="question">
+    <button id="askButton">Send</button>
+  </div>
+
+    <script>
+    $(document).ready(function() {
+        $("#askButton").click(function() {
+            var question = $("#question").val();
+            if (question.trim() === "") return;  // Prevent empty messages
+
+            // Display user message immediately
+            displayUserMessage(question);
+
+            // Send to the server
+            $.post("/ask", { question: question }, function(data) {
+                displayAiMessage(data.response);
+            });
+
+            $("#question").val(""); // Clear input
+        });
+
+        function displayUserMessage(message) {
+            var chatContainer = $("#chat-container");
+            var userMessage = '<div class="message user-message">' + message + '</div>';
+            chatContainer.append(userMessage);
+            chatContainer[0].scrollTop = chatContainer[0].scrollHeight; // Scroll to bottom
+        }
+
+        function displayAiMessage(message) {
+            var chatContainer = $("#chat-container");
+            var aiMessageContainer = '<div class="ai-message-container">'; // Container for avatar + message;
+            aiMessageContainer += '<img class="avatar" src="{{ url_for('static', filename='assets/avatar.png') }}" alt="Assistant Avatar">';
+            aiMessageContainer += '<div class="message ai-message">' + message + '</div>';
+            aiMessageContainer += '</div>'; // Closing tag for the container;
+
+            chatContainer.append(aiMessageContainer);  // Append container to chat
+            chatContainer[0].scrollTop = chatContainer[0].scrollHeight; // Scroll to bottom
+        }
+    });
+    </script>
+
+</body>
+</html>
