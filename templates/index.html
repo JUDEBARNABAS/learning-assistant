@@ -1,28 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Learning Assistant</title>
+    <title>ATIM Learning Assistant</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='assets/style.css') }}">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         /* Basic Styling to Match Chat Interface */
         body {
             font-family: sans-serif;
-            background-color: #333;
+            background-color: #222; /* Dark background */
             color: #eee;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             height: 100vh; /* Full viewport height */
+            overflow: hidden; /* Prevents scroll bars on the body */
         }
 
         #logo {
-            width: 80px;
+            width: 50px;  /* Smaller Logo Size */
             height: auto;
             border-radius: 50%;
-            margin: 20px auto; /* Center Logo */
-            display: block;
+            position: absolute;  /* Positioning */
+            top: 10px;
+            right: 10px;
         }
 
         .chat-container {
@@ -32,9 +34,9 @@
         }
 
         .message {
-            background-color: #444;
+            background-color: #333;
             color: #eee;
-            border-radius: 10px;
+            border-radius: 15px;  /* More rounded corners */
             padding: 10px 15px;
             margin-bottom: 10px;
             width: fit-content;
@@ -42,7 +44,7 @@
         }
 
         .user-message {
-            background-color: #555;
+            background-color: #444; /* Different color for user */
             align-self: flex-end;
         }
 
@@ -54,9 +56,9 @@
         }
 
         .ai-message {
-            background-color: #444;
+            background-color: #333;
             color: #eee;
-            border-radius: 10px;
+            border-radius: 15px; /* More rounded corners */
             padding: 10px 15px;
             margin-bottom: 10px;
             width: fit-content;
@@ -64,15 +66,15 @@
         }
 
         .avatar {
-            width: 50px;
-            height: 50px;
+            width: 40px; /* Smaller Avatar */
+            height: 40px;
             border-radius: 50%;
             margin-right: 10px;
         }
 
         .input-area {
             padding: 15px;
-            background-color: #222;
+            background-color: #111; /* Dark input area */
             display: flex;
             align-items: center;
             border-top: 1px solid #555;
@@ -81,14 +83,48 @@
         #question {
             flex-grow: 1;
             padding: 8px;
-            border: 1px solid #555;
+            border: none;  /* Remove border */
             background-color: #444;
             color: #eee;
-            border-radius: 5px;
+            border-radius: 20px; /* More rounded input */
             margin-right: 10px;
         }
 
         #askButton {
+            background-color: #555;
+            color: #eee;
+            padding: 8px 15px; /* Slightly larger button */
+            border: none;
+            cursor: pointer;
+            border-radius: 20px; /* Rounded button */
+        }
+
+        #accessibility-panel {
+            position: absolute; /* Or 'fixed' */
+            top: 20px;
+            left: 20px;  /* Move to left for this UI */
+            background-color: #111; /* Dark Accessibility Panel */
+            color: #eee;
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 1000; /* Ensure it's above other elements */
+            width: 250px; /* Adjust as needed */
+            display: none; /* Hidden by default */
+        }
+
+        #accessibility-panel label {
+            display: block; /* Each label on a new line */
+            margin-bottom: 5px;
+        }
+
+        #accessibility-panel input[type="checkbox"] {
+            margin-right: 5px;
+        }
+
+        #accessibility-button {
+            position: absolute;
+            top: 20px;
+            right: 80px;  /* Position near logo, adjust as needed */
             background-color: #555;
             color: #eee;
             padding: 8px 12px;
@@ -96,56 +132,334 @@
             cursor: pointer;
             border-radius: 5px;
         }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 30px;
+            height: 17px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 13px;
+            width: 13px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+
+        input:focus + .slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+
+        input:checked + .slider:before {
+            -webkit-transform: translateX(13px);
+            -ms-transform: translateX(13px);
+            transform: translateX(13px);
+        }
+
+        /* Rounded sliders */
+        .slider.round {
+            border-radius: 17px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+         /* Style the select element */
+        #language-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #555;
+            background-color: #444;
+            color: #eee;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-sizing: border-box; /* Important: Include padding and border in the element's total width and height */
+        }
+
     </style>
 </head>
 <body>
 
-  <img id="logo" src="{{ url_for('static', filename='assets/logo.png') }}" alt="Learning Assistant Logo">
+    <img id="logo" src="{{ url_for('static', filename='assets/logo.png') }}" alt="Learning Assistant Logo">
 
-  <div class="chat-container" id="chat-container">
-    <!-- Messages will be added here -->
-  </div>
+    <button id="accessibility-button">Accessibility</button>
 
-  <div class="input-area">
-    <input type="text" id="question" placeholder="Ask me anything" name="question">
-    <button id="askButton">Send</button>
-  </div>
+    <div id="accessibility-panel">
+        <h3>Accessibility</h3>
+
+        <!-- Language Mode -->
+        <label for="language-select">Language:</label>
+        <select id="language-select">
+            <option value="acholi">Acholi</option>
+            <option value="english">English</option>
+        </select>
+
+        <!-- Auditory Mode -->
+        <label for="text-to-speech">
+            Text-to-Speech
+            <label class="switch">
+                <input type="checkbox" id="text-to-speech">
+                <span class="slider round"></span>
+            </label>
+        </label>
+
+        <label for="speech-to-text">
+            Speech-to-Text
+            <label class="switch">
+                <input type="checkbox" id="speech-to-text">
+                <span class="slider round"></span>
+            </label>
+        </label>
+
+        <!-- Visual Mode -->
+        <label for="sign-language">
+            Sign Language
+            <label class="switch">
+                <input type="checkbox" id="sign-language">
+                <span class="slider round"></span>
+            </label>
+        </label>
+
+        <!-- Color and Contrast Modes-->
+        <label for="high-contrast">
+            High Contrast
+            <label class="switch">
+                <input type="checkbox" id="high-contrast">
+                <span class="slider round"></span>
+            </label>
+        </label>
+
+        <label for="dark-mode">
+            Dark Mode
+            <label class="switch">
+                <input type="checkbox" id="dark-mode">
+                <span class="slider round"></span>
+            </label>
+        </label>
+
+    </div>
+
+
+    <div class="chat-container" id="chat-container">
+        <!-- Initial message -->
+        <div class="ai-message-container">
+            <img class="avatar" src="{{ url_for('static', filename='assets/avatar.png') }}" alt="ATIM Avatar">
+            <div class="message ai-message">{{ initial_message }}</div>
+        </div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="question" placeholder="Ask me anything" name="question">
+        <button id="askButton">Send</button>
+    </div>
 
     <script>
     $(document).ready(function() {
+
+        // Initial setup and Accessibility panel toggle
+        $("#accessibility-button").click(function() {
+            $("#accessibility-panel").toggle();
+        });
+
+
         $("#askButton").click(function() {
             var question = $("#question").val();
-            if (question.trim() === "") return;  // Prevent empty messages
+            if (question.trim() === "") return;
 
-            // Display user message immediately
             displayUserMessage(question);
 
-            // Send to the server
-            $.post("/ask", { question: question }, function(data) {
+            // Get the selected language
+            var language = $("#language-select").val();
+
+
+            $.post("/ask", { question: question, language: language }, function(data) {
                 displayAiMessage(data.response);
             });
 
-            $("#question").val(""); // Clear input
+            $("#question").val("");
         });
 
         function displayUserMessage(message) {
             var chatContainer = $("#chat-container");
             var userMessage = '<div class="message user-message">' + message + '</div>';
             chatContainer.append(userMessage);
-            chatContainer[0].scrollTop = chatContainer[0].scrollHeight; // Scroll to bottom
+            chatContainer[0].scrollTop = chatContainer[0].scrollHeight;
         }
 
         function displayAiMessage(message) {
             var chatContainer = $("#chat-container");
-            var aiMessageContainer = '<div class="ai-message-container">'; // Container for avatar + message;
-            aiMessageContainer += '<img class="avatar" src="{{ url_for('static', filename='assets/avatar.png') }}" alt="Assistant Avatar">';
+            var aiMessageContainer = '<div class="ai-message-container">';
+            aiMessageContainer += '<img class="avatar" src="{{ url_for('static', filename='assets/avatar.png') }}" alt="ATIM Avatar">';
             aiMessageContainer += '<div class="message ai-message">' + message + '</div>';
-            aiMessageContainer += '</div>'; // Closing tag for the container;
+            aiMessageContainer += '</div>';
 
-            chatContainer.append(aiMessageContainer);  // Append container to chat
-            chatContainer[0].scrollTop = chatContainer[0].scrollHeight; // Scroll to bottom
+            chatContainer.append(aiMessageContainer);
+            chatContainer[0].scrollTop = chatContainer[0].scrollHeight;
         }
+
+        // Accessibility feature event handlers (example - Dark Mode)
+        $("#dark-mode").change(function() {
+            if (this.checked) {
+                $("body").css("background-color", "#000").css("color", "#fff");  //Example styling. Adjust to suit
+                $(".message").css("background-color", "#111").css("color", "#eee");
+                $(".input-area").css("background-color", "#000").css("border-top", "1px solid #333");
+                $("#question").css("background-color", "#111").css("color", "#eee");
+                $("#accessibility-panel").css("background-color", "#000").css("color", "#eee");
+
+            } else {
+                $("body").css("background-color", "#222").css("color", "#eee");
+                $(".message").css("background-color", "#333").css("color", "#eee");
+                $(".input-area").css("background-color", "#111").css("border-top", "1px solid #555");
+                 $("#question").css("background-color", "#444").css("color", "#eee");
+                 $("#accessibility-panel").css("background-color", "#111").css("color", "#eee");
+            }
+        });
+
+        //Additional accessibility feature event handlers (High Contrast)
+        $("#high-contrast").change(function() {
+            if (this.checked) {
+                $("body").css("background-color", "#000").css("color", "#fff");  //Example styling. Adjust to suit
+                $(".message").css("background-color", "#fff").css("color", "#000");
+                $(".input-area").css("background-color", "#fff").css("border-top", "1px solid #000");
+                $("#question").css("background-color", "#fff").css("color", "#000");
+                $("#accessibility-panel").css("background-color", "#000").css("color", "#eee");
+            } else {
+                $("body").css("background-color", "#222").css("color", "#eee");
+                $(".message").css("background-color", "#333").css("color", "#eee");
+                $(".input-area").css("background-color", "#111").css("border-top", "1px solid #555");
+                $("#question").css("background-color", "#444").css("color", "#eee");
+                $("#accessibility-panel").css("background-color", "#111").css("color", "#eee");
+            }
+        });
+
+         // Change Voice
+         var synth = window.speechSynthesis;
+
+            function populateVoiceList() {
+                voices = synth.getVoices();
+                console.log(voices);
+                for (i = 0; i < voices.length ; i++) {
+                //Loop through each voice object and print the value of it's name attribute to the console.
+                console.log(voices[i].name);
+                }
+            }
+
+            populateVoiceList();
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = populateVoiceList;
+            }
+        //Additional accessibility feature event handlers (Text-to-speech)
+        $("#text-to-speech").change(function() {
+
+           if (this.checked) {
+
+                 //Function to speak text
+                function speak(text) {
+                    const synth = window.speechSynthesis;
+
+                     // Specify the voice to use
+                    var voices = synth.getVoices();
+                    var selectedVoice = voices.find(voice => voice.name.includes("teen"));// Find a voice object with the name "teen"
+                     //var selectedVoice = voices.find(voice => voice.name.includes("teen") && voice.lang.startsWith("en"));
+
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    if (selectedVoice) {
+                        utterance.voice = selectedVoice; // Set the voice to the African teen voice
+                        console.log("Voice is:" + selectedVoice.voiceURI);
+                    } else {
+                         console.log("Voice is not set");
+                    }
+                    synth.speak(utterance);
+                }
+
+                 //Speak ai messages
+                $('.ai-message').each(function() {
+                    const text = $(this).text();
+                    speak(text);
+                 });
+
+                 //Speak user messages
+                $('.user-message').each(function() {
+                    const text = $(this).text();
+                    speak(text);
+                 });
+
+            }else{
+                 window.speechSynthesis.cancel();//Stop the speech
+            }
+        });
+
+         // Speech to text
+        $("#speech-to-text").change(function() {
+             if (this.checked) {
+                 // Use the speech recognition API to convert speech to text.
+                 // This will require browser support and user permission.
+
+                 alert("Speech-to-Text is enabled.  Speak clearly and distinctly. This is not fully implemented") //Inform user
+                //To convert speech to text, use:
+                //const recognition = new webkitSpeechRecognition() or SpeechRecognition();
+                //recognition.start()
+                //Followed by updating the question field and sending the information to the server
+
+             }else{
+                alert("Speech-to-Text is disabled.")
+             }
+        });
+
+
+        // Sign language
+        $("#sign-language").change(function() {
+             if (this.checked) {
+                 // Use sign language model to convert speech to text.
+                 // and also translate speech to sign and also recognise sign to speech
+                 alert("Sign Language Recognition and generation is enabled. ") //Inform user
+
+                //Code and implementation to convert speech/text to sign
+
+             }else{
+                alert("Sign Language is disabled.")
+             }
+        });
+
+
+        //Function to speak new text that is being added dynamically
+        function speak(text) {
+            const synth = window.speechSynthesis;
+            const utterance = new SpeechSynthesisUtterance(text);
+            synth.speak(utterance);
+        }
+
     });
+
     </script>
 
 </body>
